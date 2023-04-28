@@ -64,6 +64,28 @@ func setHashSidecarSet(sidecarset *appsv1alpha1.SidecarSet) error {
 	return nil
 }
 
+func setDefaultSidecarSet(ss, beforeMut, old *appsv1alpha1.SidecarSet) {
+	defaults.SetDefaultsSidecarSet(ss)
+	if old != nil {
+		// check imagePullPolicy
+		for i, container := range beforeMut.Spec.Containers {
+			if ss.Spec.Containers[i].ImagePullPolicy != container.ImagePullPolicy {
+				// policy changed
+				for _, oldContainer := range old.Spec.Containers {
+					if oldContainer.Name == container.Name {
+						if oldContainer.ImagePullPolicy == container.ImagePullPolicy {
+							// user didn't change it, recover
+							beforeMut.Spec.Containers[i].ImagePullPolicy = oldContainer.ImagePullPolicy
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
+}
+
 var _ admission.Handler = &SidecarSetCreateHandler{}
 
 // Handle handles admission requests.
@@ -77,7 +99,15 @@ func (h *SidecarSetCreateHandler) Handle(ctx context.Context, req admission.Requ
 	var copy runtime.Object = obj.DeepCopy()
 	switch req.AdmissionRequest.Operation {
 	case admissionv1.Create, admissionv1.Update:
-		defaults.SetDefaultsSidecarSet(obj)
+		var old *appsv1alpha1.SidecarSet
+		if req.AdmissionRequest.Operation == admissionv1.Update {
+			old = new(appsv1alpha1.SidecarSet)
+			err = h.Decoder.DecodeRaw(req.AdmissionRequest.OldObject, old)
+			if err != nil {
+				return admission.Errored(http.StatusBadRequest, err)
+			}
+		}
+		setDefaultSidecarSet(obj, copy.(*appsv1alpha1.SidecarSet), old)
 		if err := setHashSidecarSet(obj); err != nil {
 			return admission.Errored(http.StatusInternalServerError, err)
 		}

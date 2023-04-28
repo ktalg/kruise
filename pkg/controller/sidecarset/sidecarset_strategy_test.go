@@ -19,8 +19,11 @@ package sidecarset
 import (
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/klog/v2"
 	"math/rand"
 	"reflect"
+	"sigs.k8s.io/yaml"
 	"testing"
 
 	appsv1alpha1 "github.com/openkruise/kruise/apis/apps/v1alpha1"
@@ -535,4 +538,281 @@ func testSortNextUpgradePods(t *testing.T, factoryPods FactoryPods, factorySidec
 			}
 		})
 	}
+}
+func TestName(t *testing.T) {
+	po := `apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    ProviderCreate: done
+    k8s.aliyun.com/cluster-dns: 192.168.0.10
+    k8s.aliyun.com/cluster-domain: cluster.local
+    k8s.aliyun.com/eci-client-token: 7f71ba34-42eb-4d1f-9118-fac96815d2e6
+    k8s.aliyun.com/eci-created-by-template: "true"
+    k8s.aliyun.com/eci-drop-apiserver-interactive-caps: ""
+    k8s.aliyun.com/eci-instance-cpu: "2.0"
+    k8s.aliyun.com/eci-instance-id: eci-wz9c9z4zt9zfxlf4dd8v
+    k8s.aliyun.com/eci-instance-mem: "4.0"
+    k8s.aliyun.com/eci-instance-spec: 2.0-4.0Gi
+    k8s.aliyun.com/eci-instance-zone: cn-shenzhen-d
+    k8s.aliyun.com/eci-kube-proxy-enabled: "true"
+    k8s.aliyun.com/eci-matched-image-cache: imc-wz9dxo0xw2w9q4s6wnf1
+    k8s.aliyun.com/eci-request-id: 73A3E610-54E4-5010-94CC-341C03003909
+    k8s.aliyun.com/eci-schedule-result: finished
+    k8s.aliyun.com/eci-security-group: sg-wz90jvapmq6ckfqrjd38
+    k8s.aliyun.com/eci-vpc: vpc-wz9v17plp9fvtk7ku6eaw
+    k8s.aliyun.com/eci-vswitch: vsw-wz9qk76jf6wja3clt4flc
+    k8s.aliyun.com/eni-instance-id: eni-wz9hdgyzaznsv8h4luzb
+    k8s.aliyun.com/k8s-version: v1.22.3-aliyun.1
+    k8s.aliyun.com/vk-version: v2.8.5-2023-02-21-08-59-UTC
+    kruise.io/sidecarset-hash: '{"test-sidecarset":{"updateTimestamp":"2023-04-27T10:05:54Z","hash":"xvwzb9v5d8cdz567x2x9w2dz4wd9c6xb82v46xc8f4wb4c88xzd5bbwzbdd84wc7","sidecarSetName":"test-sidecarset","sidecarList":["sidecar1"],"controllerRevision":"test-sidecarset-7fffd8d6c8"}}'
+    kruise.io/sidecarset-hash-without-image: '{"test-sidecarset":{"updateTimestamp":"2023-04-27T10:04:45Z","hash":"49b4cbbdzf8v7b2z6wwcdzd4252cd7b8zv9cbf66wxxxzw444bbbfw82b54f8246","sidecarSetName":"test-sidecarset","sidecarList":["sidecar1"],"controllerRevision":""}}'
+    kruise.io/sidecarset-injected-list: test-sidecarset
+    kruise.io/sidecarset-inplace-update-state: '{"test-sidecarset":{"revision":"xvwzb9v5d8cdz567x2x9w2dz4wd9c6xb82v46xc8f4wb4c88xzd5bbwzbdd84wc7","updateTimestamp":"2023-04-27T10:05:54Z","lastContainerStatuses":{"sidecar1":{"imageID":"docker.io/library/nginx@sha256:0d17b565c37bcbd895e9d92315a05c1c3c9a29f762b011a10c54a66cd53c9b31"}}}}'
+    kubernetes.io/pod-stream-port: "10250"
+    kubernetes.io/psp: ack.privileged
+    sidecar.istio.io/inject: "false"
+    traffic.sidecar.istio.io/excludeInboundPorts: "9999"
+  creationTimestamp: "2023-04-27T10:04:45Z"
+  generateName: appp-76c844fd67-
+  labels:
+    app: appp
+    pod-template-hash: 76c844fd67
+  name: appp-76c844fd67-pvk4w
+  namespace: test-infra
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: appp-76c844fd67
+    uid: f59a5a27-6fa8-4d91-98bd-df874ce6ab1e
+  resourceVersion: "679242411"
+  uid: c27310d8-233e-4b40-abbd-ae3036bfa871
+spec:
+  containers:
+  - command:
+    - sleep
+    - 999d
+    env:
+    - name: IS_INJECTED
+      value: "true"
+    image: nginx
+    imagePullPolicy: Always
+    name: sidecar1
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/log
+      name: log-volume
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-mzzbb
+      readOnly: true
+  - command:
+    - sleep
+    - 9999h
+    image: centos
+    imagePullPolicy: Always
+    name: app
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-mzzbb
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  imagePullSecrets:
+  - name: acr-credential-858c8a8356caece07dbb6311eb4adb2c
+  nodeName: virtual-kubelet-cn-shenzhen-d
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 0
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+  volumes:
+  - name: kube-api-access-mzzbb
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+  - emptyDir: {}
+    name: log-volume
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2023-04-27T10:04:59Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2023-04-27T10:05:36Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2023-04-27T10:05:36Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2023-04-27T10:04:59Z"
+    status: "True"
+    type: PodScheduled
+  - lastProbeTime: null
+    lastTransitionTime: "2023-04-27T10:04:59Z"
+    status: "True"
+    type: ContainerHasSufficientDisk
+  containerStatuses:
+  - containerID: containerd://1c8fe5e2da9ceb5f06cdbc3af1abf41e010f5848539696258366577f048ee8bb
+    image: docker.io/library/centos:latest
+    imageID: docker.io/library/centos@sha256:a27fd8080b517143cbbbab9dfb7c8571c40d67d534bbdee55bd6c473f432b177
+    lastState: {}
+    name: app
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2023-04-27T10:05:36Z"
+  - containerID: containerd://51b875a50e7a0eb665c6ec9a9afdffbb37e1fdfe0001a91742e747dd4b22c8c5
+    image: docker.io/library/nginx:latest
+    imageID: docker.io/library/nginx@sha256:0d17b565c37bcbd895e9d92315a05c1c3c9a29f762b011a10c54a66cd53c9b31
+    lastState: {}
+    name: sidecar1
+    ready: true
+    restartCount: 1
+    started: true
+    state:
+      running:
+        startedAt: "2023-04-27T10:05:56Z"
+  hostIP: 10.111.84.96
+  phase: Running
+  podIP: 10.111.84.96
+  podIPs:
+  - ip: 10.111.84.96
+  qosClass: BestEffort
+  startTime: "2023-04-27T10:04:59Z"
+`
+	p := &corev1.Pod{}
+	err := yaml.Unmarshal([]byte(po), p)
+	if err != nil {
+		panic(err)
+	}
+	pods := []*corev1.Pod{
+		p,
+	}
+	sc := `apiVersion: apps.kruise.io/v1alpha1
+kind: SidecarSet
+metadata:
+  annotations:
+    kruise.io/sidecarset-hash: f5f27fzv7d49f4745d4xbcf6v78d42wfvw4xxd8w5f89f6444b6bfdv84xbvbcx8
+    kruise.io/sidecarset-hash-without-image: 49b4cbbdzf8v7b2z6wwcdzd4252cd7b8zv9cbf66wxxxzw444bbbfw82b54f8246
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps.kruise.io/v1alpha1","kind":"SidecarSet","metadata":{"annotations":{},"name":"test-sidecarset"},"spec":{"containers":[{"command":["sleep","999d"],"image":"bb","imagePullPolicy":"Always","name":"sidecar1","volumeMounts":[{"mountPath":"/var/log","name":"log-volume"}]}],"selector":{"matchLabels":{"app":"appp"}},"updateStrategy":{"maxUnavailable":20,"type":"RollingUpdate"},"volumes":[{"emptyDir":{},"name":"log-volume"}]}}
+  creationTimestamp: "2023-04-27T07:22:59Z"
+  generation: 56
+  name: test-sidecarset
+  resourceVersion: "679386615"
+  uid: 2b87576d-c710-4c44-a66b-a958ccbf730c
+spec:
+  containers:
+  - command:
+    - sleep
+    - 999d
+    image: asd
+    imagePullPolicy: Always
+    name: sidecar1
+    podInjectPolicy: BeforeAppContainer
+    resources: {}
+    shareVolumePolicy:
+      type: disabled
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    upgradeStrategy:
+      upgradeType: ColdUpgrade
+    volumeMounts:
+    - mountPath: /var/log
+      name: log-volume
+  injectionStrategy: {}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: appp
+  updateStrategy:
+    maxUnavailable: 20
+    partition: 0
+    type: RollingUpdate
+  volumes:
+  - emptyDir: {}
+    name: log-volume
+status:
+  collisionCount: 0
+  latestRevision: test-sidecarset-647888bd78
+  matchedPods: 1
+  observedGeneration: 56
+  readyPods: 0
+  updatedPods: 0
+`
+
+	sidecarset := &appsv1alpha1.SidecarSet{}
+	err = yaml.Unmarshal([]byte(sc), sidecarset)
+	if err != nil {
+		panic(err)
+	}
+	control := sidecarcontrol.New(sidecarset)
+	// wait to upgrade pod index
+	var waitUpgradedIndexes []int
+	strategy := sidecarset.Spec.UpdateStrategy
+	isSelected := func(pod *corev1.Pod) bool {
+		//when selector is nil, always return true
+		if strategy.Selector == nil {
+			return true
+		}
+		// if selector failed, always return false
+		selector, err := metav1.LabelSelectorAsSelector(strategy.Selector)
+		if err != nil {
+			klog.Errorf("sidecarSet(%s) rolling selector error, err: %v", sidecarset.Name, err)
+			return false
+		}
+		//matched
+		if selector.Matches(labels.Set(pod.Labels)) {
+			return true
+		}
+		//Not matched, then return false
+		return false
+	}
+
+	for index, pod := range pods {
+		isUpdated := sidecarcontrol.IsPodSidecarUpdated(sidecarset, pod)
+		selected := isSelected(pod)
+		upgradable := control.IsSidecarSetUpgradable(pod)
+		fmt.Println(isUpdated, selected, upgradable)
+		if !isUpdated && selected && upgradable {
+			waitUpgradedIndexes = append(waitUpgradedIndexes, index)
+		}
+	}
+	fmt.Println(waitUpgradedIndexes)
 }
